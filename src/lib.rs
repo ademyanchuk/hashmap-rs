@@ -85,7 +85,11 @@ where
         }
         self.addresses = new_addresses;
     }
-    fn find(&self, key: &K) -> Option<usize> {
+    fn find<Q>(&self, key: &Q) -> Option<usize>
+    where
+        K: Borrow<Q>,
+        Q: Hash + Eq + ?Sized,
+    {
         let mut attempt = 0;
         loop {
             match self.address(key, attempt) {
@@ -93,7 +97,7 @@ where
                 Some(address) => match self.addresses[address] {
                     None => return None,
                     Some(ref entry) => {
-                        if entry.key == *key {
+                        if entry.key.borrow() == key {
                             return Some(address);
                         }
                         attempt += 1;
@@ -147,6 +151,24 @@ where
             }
         }
     }
+    pub fn contains_key<Q: ?Sized>(&self, key: &Q) -> bool
+    where
+        K: Borrow<Q>,
+        Q: Hash + Eq,
+    {
+        self.find(key).is_some()
+    }
+    pub fn get<Q: ?Sized>(&self, key: &Q) -> Option<&V>
+    where
+        K: Borrow<Q>,
+        Q: Hash + Eq,
+    {
+        let address = self.find(key)?;
+        match self.addresses[address] {
+            Some(ref entry) => Some(&entry.value),
+            None => None,
+        }
+    }
 }
 
 #[cfg(test)]
@@ -161,8 +183,9 @@ mod tests {
         map.insert("foo", 42);
         assert_eq!(map.len(), 2);
         assert!(!map.is_empty());
-        assert_ne!(map.find(&"bar"), None);
-        assert_ne!(map.find(&"foo"), None);
+        assert!(map.contains_key("bar"));
+        assert!(map.contains_key("foo"));
+        assert_eq!(map.get("foo"), Some(&42));
         assert_eq!(map.addresses.len(), 2)
     }
 }
