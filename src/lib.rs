@@ -143,10 +143,18 @@ where
                 }
             }
             Some(address) => {
-                // key exists, update, return old value
+                // key exists, check deleted flag, update, return old value if not deleted
                 match self.addresses[address] {
                     None => None, // it will not be None here
-                    Some(ref mut entry) => Some(mem::replace(&mut entry.value, value)),
+                    Some(ref mut entry) => {
+                        if entry.deleted {
+                            entry.deleted = false;
+                            _ = mem::replace(&mut entry.value, value);
+                            self.items += 1;
+                            return None;
+                        }
+                        Some(mem::replace(&mut entry.value, value))
+                    }
                 }
             }
         }
@@ -156,7 +164,13 @@ where
         K: Borrow<Q>,
         Q: Hash + Eq,
     {
-        self.find(key).is_some()
+        match self.find(key) {
+            None => false,
+            Some(address) => match self.addresses[address] {
+                None => false,
+                Some(ref entry) => !entry.deleted,
+            },
+        }
     }
     pub fn get<Q: ?Sized>(&self, key: &Q) -> Option<&V>
     where
@@ -165,7 +179,12 @@ where
     {
         let address = self.find(key)?;
         match self.addresses[address] {
-            Some(ref entry) => Some(&entry.value),
+            Some(ref entry) => {
+                if entry.deleted {
+                    return None;
+                }
+                Some(&entry.value)
+            }
             None => None,
         }
     }
