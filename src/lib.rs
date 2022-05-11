@@ -52,6 +52,12 @@ where
         // TODO: rehash entries from old vector to new
         _ = mem::replace(&mut self.addresses, new_addresses);
     }
+    pub fn len(&self) -> usize {
+        self.items
+    }
+    pub fn is_empty(&self) -> bool {
+        self.items == 0
+    }
 
     pub fn insert(&mut self, key: K, value: V) -> Option<V> {
         if self.addresses.is_empty() || self.items > 3 * self.addresses.len() / 4 {
@@ -69,6 +75,7 @@ where
                 // Empty = no entry with such key
                 Entry::Empty => {
                     self.addresses[address] = Entry::Pair { key, value };
+                    self.items += 1;
                     return None;
                 }
                 // If Pair found, check key, and if key is the same, update value
@@ -93,9 +100,14 @@ where
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     #[test]
-    fn it_works() {
-        let result = 2 + 2;
-        assert_eq!(result, 4);
+    fn insert() {
+        let mut map = HashMap::new();
+        assert_eq!(map.len(), 0);
+        assert!(map.is_empty());
+        map.insert("key: K", 43);
+        assert_eq!(map.len(), 1);
+        assert!(!map.is_empty());
     }
 }
