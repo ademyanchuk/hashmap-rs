@@ -34,6 +34,7 @@ impl<K, V> Default for HashMap<K, V> {
 impl<K, V> HashMap<K, V>
 where
     K: Hash + Eq,
+    V: Default,
 {
     fn address<Q>(&self, key: &Q, attempt: i64) -> Option<usize>
     where
@@ -188,6 +189,25 @@ where
             None => None,
         }
     }
+    pub fn remove<Q: ?Sized>(&mut self, key: &Q) -> Option<V>
+    where
+        K: Borrow<Q>,
+        Q: Hash + Eq,
+    {
+        let address = self.find(key)?;
+        match self.addresses[address] {
+            None => None,
+            Some(ref mut entry) => {
+                if entry.deleted {
+                    return None;
+                }
+                entry.deleted = true;
+                let dv: V = Default::default();
+                self.items -= 1;
+                Some(mem::replace(&mut entry.value, dv))
+            }
+        }
+    }
 }
 
 #[cfg(test)]
@@ -205,6 +225,16 @@ mod tests {
         assert!(map.contains_key("bar"));
         assert!(map.contains_key("foo"));
         assert_eq!(map.get("foo"), Some(&42));
+        assert_eq!(map.remove("foo"), Some(42));
+        assert_eq!(map.len(), 1);
+        assert_eq!(map.get("foo"), None);
         assert_eq!(map.addresses.len(), 2)
+    }
+    #[test]
+    fn empty_hashmap() {
+        let mut map = HashMap::<&str, &str>::new();
+        assert_eq!(map.contains_key("key"), false);
+        assert_eq!(map.get("key"), None);
+        assert_eq!(map.remove("key"), None);
     }
 }
