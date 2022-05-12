@@ -221,12 +221,12 @@ mod tests {
         map.insert("bar", 43);
         map.insert("foo", 42);
         assert_eq!(map.len(), 2);
+        map.insert("bazz", 123);
         assert!(!map.is_empty());
         assert!(map.contains_key("bar"));
         assert!(map.contains_key("foo"));
         assert_eq!(map.get("foo"), Some(&42));
         assert_eq!(map.remove("foo"), Some(42));
-        assert_eq!(map.len(), 1);
         assert_eq!(map.get("foo"), None);
         assert_eq!(map.addresses.len(), 2)
     }

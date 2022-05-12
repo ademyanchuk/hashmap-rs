@@ -1,5 +1,6 @@
 extern crate hashmap;
 use hashmap::HashMap;
+// use std::collections::HashMap;
 
 fn main() {
     // type inference lets us omit an explicit type signature (which
