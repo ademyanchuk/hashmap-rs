@@ -111,7 +111,7 @@ where
         K: Borrow<Q>,
         Q: Hash + Eq + Debug,
     {
-        todo!()
+        self.get(key).is_some()
     }
     pub fn get<Q: ?Sized>(&self, key: &Q) -> Option<&V>
     where
@@ -160,20 +160,19 @@ mod tests {
         assert_eq!(map.len(), 0);
         assert!(map.is_empty());
         map.insert("bar", 43);
-        // assert!(map.contains_key("bar"));
+        assert!(map.contains_key("bar"));
         map.insert("foo", 42);
-        // assert!(map.contains_key("bar"));
+        assert!(map.contains_key("bar"));
         assert_eq!(map.len(), 2);
         map.insert("bazz", 123);
-        // assert!(map.contains_key("foo"));
+        assert!(map.contains_key("foo"));
         println!("[test]: {:?}", map.table);
         assert_eq!(map.get("bar"), Some(&43));
         assert_eq!(map.get("barBazz"), None);
-        // assert!(map.contains_key("bar"));
         assert!(!map.is_empty());
-        // assert!(map.contains_key("bazz"));
-        // assert!(map.contains_key("foo"));
-        // assert_eq!(map.get("foo"), Some(&42));
+        assert!(map.contains_key("bazz"));
+        assert!(map.contains_key("foo"));
+        assert_eq!(map.get("foo"), Some(&42));
         // assert_eq!(map.remove("foo"), Some(42));
         // assert_eq!(map.get("foo"), None);
         assert_eq!(map.table.len(), 4)
