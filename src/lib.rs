@@ -118,7 +118,20 @@ where
         K: Borrow<Q>,
         Q: Hash + Eq + Debug,
     {
-        todo!()
+        let hash = self.prehash(key);
+        let mut idx = (hash % self.table.len() as u64) as usize;
+        while !matches!(self.table[idx], Entry::Empty) {
+            if let Entry::Pair { key: ek, val: ev } = &self.table[idx] {
+                if ek.borrow() == key {
+                    // found and return
+                    return Some(ev);
+                }
+            }
+            // linear probing
+            idx = (idx + 1) % self.table.len();
+        }
+        // not found
+        None
     }
     pub fn remove<Q: ?Sized>(&mut self, key: &Q) -> Option<V>
     where
@@ -154,7 +167,8 @@ mod tests {
         map.insert("bazz", 123);
         // assert!(map.contains_key("foo"));
         println!("[test]: {:?}", map.table);
-        // assert_eq!(map.get("bar"), Some(&43));
+        assert_eq!(map.get("bar"), Some(&43));
+        assert_eq!(map.get("barBazz"), None);
         // assert!(map.contains_key("bar"));
         assert!(!map.is_empty());
         // assert!(map.contains_key("bazz"));
